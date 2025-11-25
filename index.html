@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioLearner - AI Audio Lesson Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-green': '#0BBF65',
+                        'accent-green-hover': '#09a855',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        * {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(11, 191, 101, 0.1);
+        }
+
+        .accent-glow {
+            box-shadow: 0 0 20px rgba(11, 191, 101, 0.15);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .animate-pulse-soft {
+            animation: pulse-soft 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900">
+    <div class="min-h-screen flex flex-col items-center p-4 pt-2">
+        <div class="w-full max-w-2xl">
+            <!-- Compact Header -->
+            <div class="text-center mb-3">
+                <div class="flex items-center justify-center gap-1.5 mb-1">
+                    <svg class="w-8 h-8 text-accent-green" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+                    </svg>
+                    <h1 class="text-2xl font-bold">AudioLearner</h1>
+                </div>
+                <p class="text-gray-600 text-xs">Transform topics into audio lessons</p>
+            </div>
+
+            <!-- Main Card -->
+            <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-lg">
+                <form id="audioForm" class="space-y-4">
+                    
+                    <!-- Topic Input -->
+                    <div class="space-y-1.5">
+                        <label for="topic" class="block text-xs font-600 text-white">
+                            Topic <span class="text-accent-green">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="topic" 
+                            name="topic" 
+                            placeholder="e.g., AI Agents"
+                            required
+                            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-xs focus:border-accent-green focus:accent-glow"
+                        >
+                    </div>
+
+                    <!-- Time Period -->
+                    <div class="space-y-1.5">
+                        <label for="timePeriod" class="block text-xs font-600 text-white">
+                            Time Period <span class="text-accent-green">*</span>
+                        </label>
+                        <select 
+                            id="timePeriod" 
+                            name="timePeriod" 
+                            required
+                            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-xs focus:border-accent-green focus:accent-glow appearance-none cursor-pointer"
+                            style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%220BBF65%22 viewBox=%220 0 24 24%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em 1em; padding-right: 2rem;"
+                        >
+                            <option value="" disabled selected>Select period</option>
+                            <option value="Today">Today</option>
+                            <option value="Last 3 days">Last 3 days</option>
+                            <option value="Last week">Last week</option>
+                        </select>
+                    </div>
+
+                    <!-- Messages -->
+                    <div id="errorMessage" class="hidden px-3 py-2 bg-red-500 bg-opacity-10 border border-red-500 border-opacity-30 rounded text-red-400 text-xs animate-fade-in">
+                    </div>
+                    <div id="successMessage" class="hidden px-3 py-2 bg-accent-green bg-opacity-10 border border-accent-green border-opacity-30 rounded text-accent-green text-xs animate-fade-in">
+                    </div>
+
+                    <!-- Loading -->
+                    <div id="loading" class="hidden space-y-2 py-4">
+                        <div class="flex items-center justify-center gap-1">
+                            <div class="w-1.5 h-1.5 bg-accent-green rounded-full animate-pulse-soft"></div>
+                            <div class="w-1.5 h-1.5 bg-accent-green rounded-full animate-pulse-soft" style="animation-delay: 0.2s;"></div>
+                            <div class="w-1.5 h-1.5 bg-accent-green rounded-full animate-pulse-soft" style="animation-delay: 0.4s;"></div>
+                        </div>
+                        <p class="text-center text-gray-300 text-xs">Generating audio...</p>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex gap-2 pt-1">
+                        <button 
+                            type="submit" 
+                            class="flex-1 px-3 py-2 bg-accent-green hover:bg-accent-green-hover text-black font-600 rounded-lg text-xs transition-all hover:shadow-lg hover:shadow-accent-green/30 active:scale-95 flex items-center justify-center gap-1"
+                        >
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            Generate
+                        </button>
+                        <button 
+                            type="reset" 
+                            class="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 hover:border-gray-500 text-white font-600 rounded-lg text-xs transition-all active:scale-95"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Results -->
+                <div id="resultSection" class="hidden mt-6 pt-5 border-t border-gray-700 space-y-3 animate-fade-in">
+                    <h3 class="text-xs font-700 text-white">Generated Audio</h3>
+                    
+                    <div class="bg-gray-700 rounded p-3 border border-gray-600 text-xs space-y-1">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Topic:</span>
+                            <span id="resultTopic" class="font-600 text-white"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Period:</span>
+                            <span id="resultTimePeriod" class="font-600 text-white"></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-700 rounded p-3 border border-gray-600">
+                        <audio 
+                            id="audioElement" 
+                            controls 
+                            class="w-full h-8"
+                            style="filter: invert(1) hue-rotate(180deg);"
+                        ></audio>
+                    </div>
+
+                    <button 
+                        id="downloadBtn" 
+                        class="w-full px-3 py-2 bg-gray-700 border border-accent-green text-accent-green hover:bg-accent-green hover:text-white font-600 rounded-lg text-xs transition-all hover:shadow-lg hover:shadow-accent-green/30 active:scale-95 flex items-center justify-center gap-1"
+                    >
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Download
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center text-gray-500 text-xs mt-2">
+                <p>Powered by n8n Cloud & OpenAI</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('audioForm');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const resultSection = document.getElementById('resultSection');
+        const audioElement = document.getElementById('audioElement');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        const WEBHOOK_URL = 'https://lcharyfire1.app.n8n.cloud/webhook/7abdcd0a-09a9-48bf-826f-4d4662e0fde4';
+
+        let currentAudioBlob = null;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const topic = document.getElementById('topic').value.trim();
+            const timePeriod = document.getElementById('timePeriod').value.trim();
+
+            if (!topic || !timePeriod) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            await generateAudio(topic, timePeriod);
+        });
+
+        async function generateAudio(topic, timePeriod) {
+            clearMessages();
+            loading.classList.remove('hidden');
+            resultSection.classList.add('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const payload = {
+                    topic: topic,
+                    timePeriod: timePeriod
+                };
+
+                console.log('Sending request to webhook:', WEBHOOK_URL);
+                console.log('Payload:', payload);
+
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                }
+
+                const audioBlob = await response.blob();
+                console.log('Audio blob size:', audioBlob.size, 'bytes');
+
+                if (!audioBlob || audioBlob.size === 0) {
+                    throw new Error('Received empty audio file');
+                }
+
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioElement.src = audioUrl;
+                audioElement.load();
+                currentAudioBlob = audioBlob;
+                console.log('Audio URL created:', audioUrl);
+
+                document.getElementById('resultTopic').textContent = topic;
+                document.getElementById('resultTimePeriod').textContent = timePeriod;
+                
+                resultSection.classList.remove('hidden');
+
+                showSuccess('Audio generated! Play or download.');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`Failed to generate: ${error.message}`);
+            } finally {
+                loading.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            if (!currentAudioBlob) {
+                showError('No audio to download');
+                return;
+            }
+
+            const audioUrl = URL.createObjectURL(currentAudioBlob);
+            const a = document.createElement('a');
+            a.href = audioUrl;
+            a.download = `audio-${Date.now()}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            showSuccess('Download started!');
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            successMessage.classList.add('hidden');
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+        }
+
+        function clearMessages() {
+            errorMessage.classList.add('hidden');
+            successMessage.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
